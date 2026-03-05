@@ -13,23 +13,29 @@ source:
 
 build:
   number: 0
+  ignore_run_exports:
+    - libcxx        # [osx]
+    - libstdcxx     # [linux]
 
 requirements:
   build:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
+    - {{ compiler('rust') }}
     - {{ stdlib('c') }}
-    - rust >=1.81.0
     - cmake
     - make                                  # [not win]
     - protobuf
     - nasm                                  # [win]
+    - pkg-config
   host:
     - python
     - pip
     - maturin >=1.1.0,<2
-    - sqlite
-    - pkg-config
+    - sqlite {{ sqlite }}
+    - zlib {{ zlib }}
+    - libffi {{ libffi }}
+    - libiconv {{ libiconv }}
   run:
     - python
 
@@ -56,13 +62,14 @@ about:
     It provides a convenient Python interface to the vl-convert Rust library,
     enabling server-side chart rendering without a web browser.
   license: BSD-3-Clause
+  license_family: BSD
   license_file:
     - vl-convert-python/LICENSE
     - vl-convert-python/thirdparty_font.md
     - vl-convert-python/thirdparty_javascript.md
     - vl-convert-python/thirdparty_rust.yaml
   dev_url: https://github.com/vega/vl-convert
-  doc_url: https://vl-convert-python.readthedocs.io/
+  doc_url: https://github.com/vega/vl-convert/tree/main/vl-convert-python
 
 extra:
   recipe-maintainers:
