@@ -1,72 +1,53 @@
 {% set name = "vl-convert-python" %}
 {% set version = "1.9.0.post1" %}
-{% set whl = "whl" %}
 
 package:
   name: {{ name }}
   version: {{ version }}
 
-source:
-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz  # [win or (linux and aarch64)]
-  sha256: a5b06b3128037519001166f5341ec7831e19fbd7f3a5f78f73d557ac2d5859ef  # [win or (linux and aarch64)]
-  patches:   # [win or (linux and aarch64)]
-    - 01-fix-libffi-msvc.patch  # [win or (linux and aarch64)]
-
-  url: https://files.pythonhosted.org/packages/a0/18/88e02899b72fa8273ffb32bde12b0e5776ee0fd9fb29559a49c48ec4c5fa/{{ name.replace('-', '_') }}-{{ version }}-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.{{ whl }} # [linux and x86_64]
-  sha256: 3c1558fa0055e88c465bd3d71760cde9fa2c94a95f776a0ef9178252fd820b1f  # [linux and x86_64]
-
-  url: https://files.pythonhosted.org/packages/62/e6/e7d0b538c2f0daaf120901dc113bd5d5d1fa51a9532fa5ffd90234e8c69e/{{ name.replace('-', '_') }}-{{ version }}-cp37-abi3-macosx_11_0_arm64.{{ whl }} # [osx and arm64]
-  sha256: b0e7a3245f32addec7e7abeb1badf72b1513ed71ba1dba7aca853901217b3f4e  # [osx and arm64]
+source: 
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  sha256: a5b06b3128037519001166f5341ec7831e19fbd7f3a5f78f73d557ac2d5859ef
+  patches:
+    - 01-fix-libffi-msvc.patch
 
 build:
-  number: 0
-  # binary_relocation: false  # [arm64 or aarch64]
-  # detect_binary_files_with_prefix: false  # [arm64 or aarch64]
-  # ignore_prefix_files: true  # [arm64 or aarch64]
-
+  number: 1
 
 requirements:
   build:
-    - {{ compiler('c') }}        # [not win]
+    - {{ compiler('c') }}     # [not win]
     - {{ compiler('rust') }}
     - {{ stdlib('c') }}
-    - make                       # [not win]
+    - make                   # [not win]
     - cmake
     - protobuf
-    - libffi  # [win]
-    - jq                     
-    - libclang               
-    - llvmdev                
+    - libffi  
+    - jq                     # [linux and x86_64]
+    - libclang               # [linux and x86_64]
+    - llvmdev                # [linux and x86_64]
     - nasm                   # [win]
   host:
     - python
     - pip
     - maturin >=1.1.0,<2.0.0
-    - sqlite                 # [not osx]
-    - pkg-config             # [not osx]
-    - libffi  # [win]
+    - sqlite                 
+    - pkg-config           
+    - libffi
+    - libiconv  # [osx]
   run:
     - python
     - libzlib
-    - libffi  # [win]
+    - libffi 
 
-# Anaconda doesn't support pypdfium2 for Python 3.14
-{% set ignore_tests = "" %}  # [win or (linux and aarch64)]
-{% set ignore_tests = ignore_tests + " --ignore=vl-convert-python/tests/test_specs.py" %}  # [win or (linux and aarch64)]
-
+# Test are not run because pypdfium2 is not in the main channel
 test:
-  source_files:  # [win or (linux and aarch64)]
-    - vl-convert-python/tests # [win or (linux and aarch64)]
   imports:
     - vl_convert
   commands:
     - pip check
-    - pytest -vv vl-convert-python/tests  # [win or (linux and aarch64)]
   requires:
     - pip
-    - pytest  # [win or (linux and aarch64)]
-    - scikit-image  # [win or (linux and aarch64)]
-    - pypdfium2  # [win or (linux and aarch64)]
 
 about:
   home: https://github.com/jonmmease/vl-convert
@@ -76,7 +57,11 @@ about:
           into static images (SVG or PNG) or Vega chart specifications.
   license: BSD-3-Clause
   license_family: BSD
-  license_file: LICENSE  # [not win and not aarch64]
+  license_file:
+    - vl-convert-python/LICENSE
+    - vl-convert-python/thirdparty_font.md        # [not arm64 and not linux]
+    - vl-convert-python/thirdparty_javascript.md  # [not arm64 and not linux]
+    - vl-convert-python/thirdparty_rust.yaml      # [not arm64 and not linux]
   doc_url: https://github.com/jonmmease/vl-convert/tree/main
   dev_url: https://github.com/jonmmease/vl-convert/tree/main
 
