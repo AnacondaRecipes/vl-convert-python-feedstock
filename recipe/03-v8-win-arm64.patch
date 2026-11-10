@@ -1,0 +1,64 @@
+Backport Windows ARM64 support from denoland/rusty_v8#1898.
+
+Only install Linux sysroots when the target is Linux, use the MSVC
+return-value ABI adapter on both x86_64 and aarch64 Windows, and keep
+the x86-only SSE3 flag out of ARM64 cross-toolchain invocations.
+---
+diff --git a/build.rs b/build.rs
+--- a/build.rs
++++ b/build.rs
+@@ -239,9 +239,11 @@ fn build_v8(is_asan: bool) {
+   // cross-compilation setup
+   if target_arch == "aarch64" {
+     gn_args.push(r#"target_cpu="arm64""#.to_string());
+-    gn_args.push("use_sysroot=true".to_string());
+-    maybe_install_sysroot("arm64");
+-    maybe_install_sysroot("amd64");
++    if target_os == "linux" {
++      gn_args.push("use_sysroot=true".to_string());
++      maybe_install_sysroot("arm64");
++      maybe_install_sysroot("amd64");
++    }
+   }
+   if target_arch == "arm" {
+     gn_args.push(r#"target_cpu="arm""#.to_string());
+diff --git a/build/config/win/BUILD.gn b/build/config/win/BUILD.gn
+--- a/build/config/win/BUILD.gn
++++ b/build/config/win/BUILD.gn
+@@ -126,8 +126,9 @@ config("compiler") {
+     # microarchitecture. MSVC only supports a subset of architectures, and the
+     # next step after SSE2 will be AVX.
+     if (current_cpu == "x86" || current_cpu == "x64") {
+-      cflags += [ "-msse3" ]
++      # This x86-only flag leaks into ARM64 cross-toolchain invocations.
++      # cflags += [ "-msse3" ]
+     }
+ 
+     # Enable ANSI escape codes if something emulating them is around (cmd.exe
+     # doesn't understand ANSI escape codes by default). Make sure to not enable
+diff --git a/src/isolate.rs b/src/isolate.rs
+--- a/src/isolate.rs
++++ b/src/isolate.rs
+@@ -245,7 +245,10 @@ where
+   ) -> *mut Promise;
+ 
+-#[cfg(all(target_family = "windows", target_arch = "x86_64"))]
++#[cfg(all(
++  target_family = "windows",
++  any(target_arch = "x86_64", target_arch = "aarch64")
++))]
+ pub type RawHostImportModuleDynamicallyCallback =
+   for<'s> extern "C" fn(
+     *mut *mut Promise,
+     Local<'s, Context>,
+@@ -307,6 +310,9 @@ where
+     }
+ 
+-    #[cfg(all(target_family = "windows", target_arch = "x86_64"))]
++    #[cfg(all(
++      target_family = "windows",
++      any(target_arch = "x86_64", target_arch = "aarch64")
++    ))]
+     #[inline(always)]
+     extern "C" fn abi_adapter<'s, F: HostImportModuleDynamicallyCallback>(
+       return_value: *mut *mut Promise,

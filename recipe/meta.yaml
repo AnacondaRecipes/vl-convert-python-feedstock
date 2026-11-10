@@ -5,11 +5,18 @@ package:
   name: {{ name }}
   version: {{ version }}
 
-source: 
-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: a5b06b3128037519001166f5341ec7831e19fbd7f3a5f78f73d557ac2d5859ef
-  patches:
-    - 01-fix-libffi-msvc.patch
+source:
+  - url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+    sha256: a5b06b3128037519001166f5341ec7831e19fbd7f3a5f78f73d557ac2d5859ef
+    patches:
+      - 01-fix-libffi-msvc.patch
+      - 02-use-vendored-v8-win-arm64.patch  # [win and arm64]
+  - url: https://crates.io/api/v1/crates/v8/0.105.1/download  # [win and arm64]
+    fn: v8-0.105.1.tar.gz  # [win and arm64]
+    sha256: b3f1b18ae89236d39abfa7136ec712f1d2daab61cddeef00b61a804e8a9b2dee  # [win and arm64]
+    folder: v8  # [win and arm64]
+    patches:  # [win and arm64]
+      - 03-v8-win-arm64.patch  # [win and arm64]
 
 build:
   number: 2
@@ -26,6 +33,9 @@ requirements:
     - jq                     # [linux and x86_64]
     - libclang               # [linux and x86_64]
     - llvmdev                # [linux and x86_64]
+    - gn                     # [win and arm64]
+    - ninja-base             # [win and arm64]
+    - libclang               # [win and arm64]
     - nasm                   # [win]
   host:
     - python

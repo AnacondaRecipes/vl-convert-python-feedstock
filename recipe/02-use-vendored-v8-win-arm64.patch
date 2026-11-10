@@ -1,0 +1,11 @@
+Use the vendored rusty_v8 crate for Windows ARM64 source builds.
+---
+diff --git a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -6,4 +6,5 @@
+ [patch.crates-io]
+ libffi-sys = { git = "https://github.com/tov/libffi-rs", rev = "d0704d634b6f3ffef5b6fc7e07fe965a1cff5c7b" }
++v8 = { path = "v8" }
+ 
+ [profile.release]
