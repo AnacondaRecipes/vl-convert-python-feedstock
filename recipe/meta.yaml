@@ -23,6 +23,7 @@ requirements:
     - cmake
     - protobuf
     - libffi  
+    - pkg-config
     - jq                     # [linux and x86_64]
     - libclang               # [linux and x86_64]
     - llvmdev                # [linux and x86_64]
@@ -32,8 +33,7 @@ requirements:
     - python
     - pip
     - maturin >=1.1.0,<2.0.0
-    - sqlite {{ sqlite }}                
-    - pkg-config           
+    - sqlite {{ sqlite }}                           
     - libffi {{ libffi }}
     - libiconv {{ libiconv }} # [osx]
     - libzlib {{ libzlib }} 
