@@ -27,14 +27,16 @@ requirements:
     - libclang               # [linux and x86_64]
     - llvmdev                # [linux and x86_64]
     - nasm                   # [win]
+    - clang                  # [win and arm64]  # ring 0.17.x forces clang for aarch64-pc-windows-msvc asm
   host:
     - python
     - pip
     - maturin >=1.1.0,<2.0.0
-    - sqlite                 
+    - sqlite {{ sqlite }}                
     - pkg-config           
-    - libffi
-    - libiconv  # [osx]
+    - libffi {{ libffi }}
+    - libiconv {{ libiconv }} # [osx]
+    - libzlib {{ libzlib }} 
   run:
     - python
     - libzlib
