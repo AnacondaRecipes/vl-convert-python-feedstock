@@ -21,6 +21,18 @@ source:
   - url: https://raw.githubusercontent.com/denoland/icu/a22a8f24224ddda8b856437d7e8560de1da3f8e1/common/icudtl.dat  # [win and arm64]
     sha256: 7c40c811d30d459dbf04a04c141b60eb4247cd58a008fb836605317df665748f  # [win and arm64]
     folder: v8/third_party/icu/common  # [win and arm64]
+  - url: https://raw.githubusercontent.com/denoland/icu/a22a8f24224ddda8b856437d7e8560de1da3f8e1/LICENSE  # [win and arm64]
+    fn: LICENSE.icu  # [win and arm64]
+    sha256: f3005e195ff74d8812cc1f182a1c446fab678d70a10e3dada497585befee5416  # [win and arm64]
+    folder: v8/third_party/icu  # [win and arm64]
+  - url: https://raw.githubusercontent.com/denoland/rusty_v8/v0.105.1/LICENSE  # [win and arm64]
+    fn: LICENSE.rusty_v8  # [win and arm64]
+    sha256: 1c6356fb751d45f0c53093ebf8a7f5e580e802f51999178e19d60f3ec39e147d  # [win and arm64]
+    folder: v8  # [win and arm64]
+  - url: https://raw.githubusercontent.com/v8/v8/12.4.254.20/LICENSE  # [win and arm64]
+    fn: LICENSE.v8  # [win and arm64]
+    sha256: 81680185f0cb339021e3b73714499264de72f33b17cfdb0c14f400de6d95cf0e  # [win and arm64]
+    folder: v8  # [win and arm64]
   - url: https://github.com/libffi-rs/libffi-rs/archive/d0704d634b6f3ffef5b6fc7e07fe965a1cff5c7b.tar.gz  # [win and arm64]
     sha256: 525206092e7844a08869aec91ad95b60553108c402b9252276b9636c0c4c7c13  # [win and arm64]
     folder: libffi-rs  # [win and arm64]
@@ -61,12 +73,14 @@ requirements:
     - libzlib
     - libffi 
 
-# Test are not run because pypdfium2 is not in the main channel
 test:
+  files:
+    - test_vl_convert.py
   imports:
     - vl_convert
   commands:
     - pip check
+    - python test_vl_convert.py
   requires:
     - pip
 
@@ -80,9 +94,15 @@ about:
   license_family: BSD
   license_file:
     - vl-convert-python/LICENSE
-    - vl-convert-python/thirdparty_font.md        # [not arm64 and not linux]
-    - vl-convert-python/thirdparty_javascript.md  # [not arm64 and not linux]
-    - vl-convert-python/thirdparty_rust.yaml      # [not arm64 and not linux]
+    - vl-convert-python/thirdparty_font.md        # [win or not arm64]
+    - vl-convert-python/thirdparty_javascript.md  # [win or not arm64]
+    - vl-convert-python/thirdparty_rust.yaml      # [win or not arm64]
+    - v8/LICENSE.rusty_v8                         # [win and arm64]
+    - v8/LICENSE.v8                               # [win and arm64]
+    - v8/third_party/icu/LICENSE.icu              # [win and arm64]
+    - libffi-rs/LICENSE-MIT                       # [win and arm64]
+    - libffi-rs/LICENSE-APACHE                    # [win and arm64]
+    - libffi-rs/libffi-sys-rs/libffi/LICENSE      # [win and arm64]
   doc_url: https://github.com/jonmmease/vl-convert/tree/main
   dev_url: https://github.com/jonmmease/vl-convert/tree/main
 

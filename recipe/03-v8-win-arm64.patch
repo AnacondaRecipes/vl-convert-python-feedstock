@@ -1,5 +1,6 @@
-Backport Windows ARM64 support from denoland/rusty_v8#1898.
+Backport denoland/rusty_v8#1898 (40736e28a6cce5fedb467b736338842fb145ff05).
 
+The debugger and bindgen hunks are feedstock-specific compatibility fixes.
 Only install Linux sysroots when the target is Linux, use the MSVC
 return-value ABI adapter on both x86_64 and aarch64 Windows, keep
 the x86-only SSE3 flag out of ARM64 cross-toolchain invocations, avoid
