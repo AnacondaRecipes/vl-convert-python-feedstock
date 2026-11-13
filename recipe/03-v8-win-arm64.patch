@@ -1,0 +1,131 @@
+Backport denoland/rusty_v8#1898 (40736e28a6cce5fedb467b736338842fb145ff05).
+
+The debugger and bindgen hunks are feedstock-specific compatibility fixes.
+Only install Linux sysroots when the target is Linux, use the MSVC
+return-value ABI adapter on both x86_64 and aarch64 Windows, keep
+the x86-only SSE3 flag out of ARM64 cross-toolchain invocations, honor
+the SDK selected by conda activation instead of requiring SDK 10.0.22621.0,
+avoid requiring Chromium's SDK debugging tools, and expose typed-array
+constants explicitly to bindgen.
+---
+diff --git a/build.rs b/build.rs
+--- a/build.rs
++++ b/build.rs
+@@ -239,9 +239,11 @@ fn build_v8(is_asan: bool) {
+   // cross-compilation setup
+   if target_arch == "aarch64" {
+     gn_args.push(r#"target_cpu="arm64""#.to_string());
+-    gn_args.push("use_sysroot=true".to_string());
+-    maybe_install_sysroot("arm64");
+-    maybe_install_sysroot("amd64");
++    if target_os == "linux" {
++      gn_args.push("use_sysroot=true".to_string());
++      maybe_install_sysroot("arm64");
++      maybe_install_sysroot("amd64");
++    }
+   }
+   if target_arch == "arm" {
+     gn_args.push(r#"target_cpu="arm""#.to_string());
+diff --git a/build/config/win/BUILD.gn b/build/config/win/BUILD.gn
+--- a/build/config/win/BUILD.gn
++++ b/build/config/win/BUILD.gn
+@@ -126,8 +126,9 @@ config("compiler") {
+     # microarchitecture. MSVC only supports a subset of architectures, and the
+     # next step after SSE2 will be AVX.
+     if (current_cpu == "x86" || current_cpu == "x64") {
+-      cflags += [ "-msse3" ]
++      # This x86-only flag leaks into ARM64 cross-toolchain invocations.
++      # cflags += [ "-msse3" ]
+     }
+ 
+     # Enable ANSI escape codes if something emulating them is around (cmd.exe
+     # doesn't understand ANSI escape codes by default). Make sure to not enable
+diff --git a/src/isolate.rs b/src/isolate.rs
+--- a/src/isolate.rs
++++ b/src/isolate.rs
+@@ -245,7 +245,10 @@ where
+   ) -> *mut Promise;
+ 
+-#[cfg(all(target_family = "windows", target_arch = "x86_64"))]
++#[cfg(all(
++  target_family = "windows",
++  any(target_arch = "x86_64", target_arch = "aarch64")
++))]
+ pub type RawHostImportModuleDynamicallyCallback =
+   for<'s> extern "C" fn(
+     *mut *mut Promise,
+     Local<'s, Context>,
+@@ -307,6 +310,9 @@ where
+     }
+ 
+-    #[cfg(all(target_family = "windows", target_arch = "x86_64"))]
++    #[cfg(all(
++      target_family = "windows",
++      any(target_arch = "x86_64", target_arch = "aarch64")
++    ))]
+     #[inline(always)]
+     extern "C" fn abi_adapter<'s, F: HostImportModuleDynamicallyCallback>(
+       return_value: *mut *mut Promise,
+diff --git a/build/vs_toolchain.py b/build/vs_toolchain.py
+--- a/build/vs_toolchain.py
++++ b/build/vs_toolchain.py
+@@ -40,7 +40,11 @@
+ # * MSVS_VERSIONS in this file
+ #   Records the packaged and default version of Visual Studio
+ TOOLCHAIN_HASH = '7393122652'
+-SDK_VERSION = '10.0.22621.0'
++SDK_VERSION = (
++    os.environ.get('WindowsSDKVersion')
++    or os.environ.get('WindowsSDKVer')
++    or '10.0.22621.0'
++).rstrip('\\/')
+ 
+ script_dir = os.path.dirname(os.path.realpath(__file__))
+ json_data_file = os.path.join(script_dir, 'win_toolchain.json')
+@@ -432,7 +436,8 @@
+ 
+   # List of debug files that should be copied, the first element of the tuple is
+   # the name of the file and the second indicates if it's optional.
+-  debug_files = [('dbghelp.dll', False), ('dbgcore.dll', True)]
++  # Chromium's debugging tools are not needed for rusty_v8's static library.
++  debug_files = [('dbghelp.dll', True), ('dbgcore.dll', True)]
+   for debug_file, is_optional in debug_files:
+     full_path = os.path.join(win_sdk_dir, 'Debuggers', target_cpu, debug_file)
+     if not os.path.exists(full_path):
+diff --git a/build/toolchain/win/setup_toolchain.py b/build/toolchain/win/setup_toolchain.py
+--- a/build/toolchain/win/setup_toolchain.py
++++ b/build/toolchain/win/setup_toolchain.py
+@@ -22,7 +22,11 @@
+ import gn_helpers
+ 
+ SCRIPT_DIR = os.path.dirname(__file__)
+-SDK_VERSION = '10.0.22621.0'
++SDK_VERSION = (
++    os.environ.get('WindowsSDKVersion')
++    or os.environ.get('WindowsSDKVer')
++    or '10.0.22621.0'
++).rstrip('\\/')
+ 
+ 
+ def _ExtractImportantEnvironment(output_of_set):
+diff --git a/src/binding.hpp b/src/binding.hpp
+--- a/src/binding.hpp
++++ b/src/binding.hpp
+@@ -29,6 +29,13 @@ static size_t v8__TypedArray__kMaxByteLength = v8::TypedArray::kMaxByteLength;
+-#define TYPED_ARRAY_MAX_LENGTH(name) \
+-  static size_t v8__##name##__kMaxLength = v8::name::kMaxLength;
+-EACH_TYPED_ARRAY(TYPED_ARRAY_MAX_LENGTH)
+-#undef TYPED_ARRAY_MAX_LENGTH
++static size_t v8__Uint8Array__kMaxLength = v8::Uint8Array::kMaxLength;
++static size_t v8__Uint8ClampedArray__kMaxLength = v8::Uint8ClampedArray::kMaxLength;
++static size_t v8__Int8Array__kMaxLength = v8::Int8Array::kMaxLength;
++static size_t v8__Uint16Array__kMaxLength = v8::Uint16Array::kMaxLength;
++static size_t v8__Int16Array__kMaxLength = v8::Int16Array::kMaxLength;
++static size_t v8__Uint32Array__kMaxLength = v8::Uint32Array::kMaxLength;
++static size_t v8__Int32Array__kMaxLength = v8::Int32Array::kMaxLength;
++static size_t v8__Float32Array__kMaxLength = v8::Float32Array::kMaxLength;
++static size_t v8__Float64Array__kMaxLength = v8::Float64Array::kMaxLength;
++static size_t v8__BigUint64Array__kMaxLength = v8::BigUint64Array::kMaxLength;
++static size_t v8__BigInt64Array__kMaxLength = v8::BigInt64Array::kMaxLength;
+ 
+ using v8__CFunction = v8::CFunction;
