@@ -5,7 +5,7 @@ set "AWS_LC_SYS_CMAKE_BUILDER=1"
 
 if "%target_platform%" == "win-arm64" (
   set "V8_FROM_SOURCE=1"
-  set "CLANG_BASE_PATH=%BUILD_PREFIX%\Library"
+  set "GN=%SRC_DIR%\ninja_gn_binaries\windows-amd64\gn.exe"
   set "LIBCLANG_PATH=%BUILD_PREFIX%\Library\bin"
 )
 

@@ -17,6 +17,9 @@ source:
     folder: v8  # [win and arm64]
     patches:  # [win and arm64]
       - 03-v8-win-arm64.patch  # [win and arm64]
+  - url: https://github.com/denoland/ninja_gn_binaries/archive/20221218.tar.gz  # [win and arm64]
+    sha256: 9669232e136c284036b43029855120fd76d0d14af1bcfc0c150bbcc07860ca02  # [win and arm64]
+    folder: ninja_gn_binaries  # [win and arm64]
 
 build:
   number: 2
@@ -33,7 +36,6 @@ requirements:
     - jq                     # [linux and x86_64]
     - libclang               # [linux and x86_64]
     - llvmdev                # [linux and x86_64]
-    - gn                     # [win and arm64]
     - ninja-base             # [win and arm64]
     - libclang               # [win and arm64]
     - nasm                   # [win]
