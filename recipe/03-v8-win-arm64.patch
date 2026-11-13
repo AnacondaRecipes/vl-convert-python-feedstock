@@ -3,9 +3,10 @@ Backport denoland/rusty_v8#1898 (40736e28a6cce5fedb467b736338842fb145ff05).
 The debugger and bindgen hunks are feedstock-specific compatibility fixes.
 Only install Linux sysroots when the target is Linux, use the MSVC
 return-value ABI adapter on both x86_64 and aarch64 Windows, keep
-the x86-only SSE3 flag out of ARM64 cross-toolchain invocations, avoid
-requiring Chromium's SDK debugging tools, and expose typed-array constants
-explicitly to bindgen.
+the x86-only SSE3 flag out of ARM64 cross-toolchain invocations, honor
+the SDK selected by conda activation instead of requiring SDK 10.0.22621.0,
+avoid requiring Chromium's SDK debugging tools, and expose typed-array
+constants explicitly to bindgen.
 ---
 diff --git a/build.rs b/build.rs
 --- a/build.rs
@@ -68,7 +69,20 @@ diff --git a/src/isolate.rs b/src/isolate.rs
 diff --git a/build/vs_toolchain.py b/build/vs_toolchain.py
 --- a/build/vs_toolchain.py
 +++ b/build/vs_toolchain.py
-@@ -432,7 +432,8 @@ def _CopyDebugger(target_dir, target_cpu):
+@@ -40,7 +40,11 @@
+ # * MSVS_VERSIONS in this file
+ #   Records the packaged and default version of Visual Studio
+ TOOLCHAIN_HASH = '7393122652'
+-SDK_VERSION = '10.0.22621.0'
++SDK_VERSION = (
++    os.environ.get('WindowsSDKVersion')
++    or os.environ.get('WindowsSDKVer')
++    or '10.0.22621.0'
++).rstrip('\\/')
+ 
+ script_dir = os.path.dirname(os.path.realpath(__file__))
+ json_data_file = os.path.join(script_dir, 'win_toolchain.json')
+@@ -432,7 +436,8 @@
  
    # List of debug files that should be copied, the first element of the tuple is
    # the name of the file and the second indicates if it's optional.
@@ -78,6 +92,22 @@ diff --git a/build/vs_toolchain.py b/build/vs_toolchain.py
    for debug_file, is_optional in debug_files:
      full_path = os.path.join(win_sdk_dir, 'Debuggers', target_cpu, debug_file)
      if not os.path.exists(full_path):
+diff --git a/build/toolchain/win/setup_toolchain.py b/build/toolchain/win/setup_toolchain.py
+--- a/build/toolchain/win/setup_toolchain.py
++++ b/build/toolchain/win/setup_toolchain.py
+@@ -22,7 +22,11 @@
+ import gn_helpers
+ 
+ SCRIPT_DIR = os.path.dirname(__file__)
+-SDK_VERSION = '10.0.22621.0'
++SDK_VERSION = (
++    os.environ.get('WindowsSDKVersion')
++    or os.environ.get('WindowsSDKVer')
++    or '10.0.22621.0'
++).rstrip('\\/')
+ 
+ 
+ def _ExtractImportantEnvironment(output_of_set):
 diff --git a/src/binding.hpp b/src/binding.hpp
 --- a/src/binding.hpp
 +++ b/src/binding.hpp
