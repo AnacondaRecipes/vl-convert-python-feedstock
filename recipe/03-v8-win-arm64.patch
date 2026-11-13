@@ -1,8 +1,10 @@
 Backport Windows ARM64 support from denoland/rusty_v8#1898.
 
 Only install Linux sysroots when the target is Linux, use the MSVC
-return-value ABI adapter on both x86_64 and aarch64 Windows, and keep
-the x86-only SSE3 flag out of ARM64 cross-toolchain invocations.
+return-value ABI adapter on both x86_64 and aarch64 Windows, keep
+the x86-only SSE3 flag out of ARM64 cross-toolchain invocations, avoid
+requiring Chromium's SDK debugging tools, and expose typed-array constants
+explicitly to bindgen.
 ---
 diff --git a/build.rs b/build.rs
 --- a/build.rs
@@ -62,3 +64,37 @@ diff --git a/src/isolate.rs b/src/isolate.rs
      #[inline(always)]
      extern "C" fn abi_adapter<'s, F: HostImportModuleDynamicallyCallback>(
        return_value: *mut *mut Promise,
+diff --git a/build/vs_toolchain.py b/build/vs_toolchain.py
+--- a/build/vs_toolchain.py
++++ b/build/vs_toolchain.py
+@@ -432,7 +432,8 @@ def _CopyDebugger(target_dir, target_cpu):
+ 
+   # List of debug files that should be copied, the first element of the tuple is
+   # the name of the file and the second indicates if it's optional.
+-  debug_files = [('dbghelp.dll', False), ('dbgcore.dll', True)]
++  # Chromium's debugging tools are not needed for rusty_v8's static library.
++  debug_files = [('dbghelp.dll', True), ('dbgcore.dll', True)]
+   for debug_file, is_optional in debug_files:
+     full_path = os.path.join(win_sdk_dir, 'Debuggers', target_cpu, debug_file)
+     if not os.path.exists(full_path):
+diff --git a/src/binding.hpp b/src/binding.hpp
+--- a/src/binding.hpp
++++ b/src/binding.hpp
+@@ -29,6 +29,13 @@ static size_t v8__TypedArray__kMaxByteLength = v8::TypedArray::kMaxByteLength;
+-#define TYPED_ARRAY_MAX_LENGTH(name) \
+-  static size_t v8__##name##__kMaxLength = v8::name::kMaxLength;
+-EACH_TYPED_ARRAY(TYPED_ARRAY_MAX_LENGTH)
+-#undef TYPED_ARRAY_MAX_LENGTH
++static size_t v8__Uint8Array__kMaxLength = v8::Uint8Array::kMaxLength;
++static size_t v8__Uint8ClampedArray__kMaxLength = v8::Uint8ClampedArray::kMaxLength;
++static size_t v8__Int8Array__kMaxLength = v8::Int8Array::kMaxLength;
++static size_t v8__Uint16Array__kMaxLength = v8::Uint16Array::kMaxLength;
++static size_t v8__Int16Array__kMaxLength = v8::Int16Array::kMaxLength;
++static size_t v8__Uint32Array__kMaxLength = v8::Uint32Array::kMaxLength;
++static size_t v8__Int32Array__kMaxLength = v8::Int32Array::kMaxLength;
++static size_t v8__Float32Array__kMaxLength = v8::Float32Array::kMaxLength;
++static size_t v8__Float64Array__kMaxLength = v8::Float64Array::kMaxLength;
++static size_t v8__BigUint64Array__kMaxLength = v8::BigUint64Array::kMaxLength;
++static size_t v8__BigInt64Array__kMaxLength = v8::BigInt64Array::kMaxLength;
+ 
+ using v8__CFunction = v8::CFunction;
