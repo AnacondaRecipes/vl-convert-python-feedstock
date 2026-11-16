@@ -1,0 +1,15 @@
+Preserve the active MSVC SDK include paths when preprocessing ARM64 assembly.
+---
+diff --git a/libffi-sys-rs/build/msvc.rs b/libffi-sys-rs/build/msvc.rs
+--- a/libffi-sys-rs/build/msvc.rs
++++ b/libffi-sys-rs/build/msvc.rs
+@@ -99,5 +99,8 @@ pub fn pre_process_asm(include_dirs: &[&str], target: &str, target_arch: &str) -
+     let mut cmd = cc::windows_registry::find(target, "cl.exe").expect("Could not locate cl.exe");
+-    cmd.env("INCLUDE", include_dirs.join(";"));
++    let includes = env::var("INCLUDE")
++        .map(|includes| format!("{};{}", includes, include_dirs.join(";")))
++        .unwrap_or_else(|_| include_dirs.join(";"));
++    cmd.env("INCLUDE", includes);
+ 
+     // When cross-compiling we should provide MSVC includes as part of the INCLUDE env.var
+     let build = cc::Build::new();

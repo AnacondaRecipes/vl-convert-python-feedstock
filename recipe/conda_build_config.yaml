@@ -1,0 +1,11 @@
+# ring@0.17.8: Compiler family detection failed due to error: 
+# ToolNotFound: Failed to find tool. Is `clang` installed? (see https://docs.rs/cc/latest/cc/#compile-time-requirements for help)
+c_compiler:                # [win and arm64]
+  - clang                  # [win and arm64]
+cxx_compiler:              # [win and arm64]
+  - clang                  # [win and arm64]
+
+c_compiler_version:        # [win and arm64]
+  - 21                     # [win and arm64]
+cxx_compiler_version:      # [win and arm64]
+  - 21                     # [win and arm64]
