@@ -1,0 +1,2 @@
+# Building V8 from source for win-arm64 exceeds the default 2-hour limit.
+task_timeout: 21600  # 6 hours
